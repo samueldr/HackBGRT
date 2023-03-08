@@ -70,19 +70,11 @@ BOOLEAN ReadConfigFile(struct HackBGRT_config* config, EFI_FILE_HANDLE root_dir,
 	return TRUE;
 }
 
-static void SetBMPWithRandom(struct HackBGRT_config* config, int weight, enum HackBGRT_action action, int x, int y, const CHAR16* path) {
-	config->image_weight_sum += weight;
-	UINT32 random = Random();
-	UINT32 limit = 0xfffffffful / config->image_weight_sum * weight;
-	if (config->debug) {
-		Print(L"HackBGRT: weight %d, action %d, x %d, y %d, path %s, random = %08x, limit = %08x\n", weight, action, x, y, path, random, limit);
-	}
-	if (!config->image_weight_sum || random <= limit) {
-		config->action = action;
-		config->image_path = path;
-		config->image_x = x;
-		config->image_y = y;
-	}
+static void SetBMP(struct HackBGRT_config* config, enum HackBGRT_action action, int x, int y, const CHAR16* path) {
+	config->action = action;
+	config->image_path = path;
+	config->image_x = x;
+	config->image_y = y;
 }
 
 static int ParseCoordinate(const CHAR16* str, enum HackBGRT_action action) {
@@ -96,7 +88,6 @@ static int ParseCoordinate(const CHAR16* str, enum HackBGRT_action action) {
 }
 
 static void ReadConfigImage(struct HackBGRT_config* config, const CHAR16* line) {
-	const CHAR16* n = StrStrAfter(line, L"n=");
 	const CHAR16* x = StrStrAfter(line, L"x=");
 	const CHAR16* y = StrStrAfter(line, L"y=");
 	const CHAR16* f = StrStrAfter(line, L"path=");
@@ -113,8 +104,7 @@ static void ReadConfigImage(struct HackBGRT_config* config, const CHAR16* line) 
 		Print(L"HackBGRT: Invalid image line: %s\n", line);
 		return;
 	}
-	int weight = n && (!f || n < f) ? Atoi(n) : 1;
-	SetBMPWithRandom(config, weight, action, ParseCoordinate(x, action), ParseCoordinate(y, action), f);
+	SetBMP(config, action, ParseCoordinate(x, action), ParseCoordinate(y, action), f);
 }
 
 static void ReadConfigResolution(struct HackBGRT_config* config, const CHAR16* line) {
