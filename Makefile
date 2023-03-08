@@ -56,6 +56,18 @@ ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
 
+ifeq ($(ARCH),aarch64)
+  FORMAT = -O binary
+
+  LDFLAGS += --no-warn-rwx-segments
+  LDFLAGS += -defsym=EFI_SUBSYSTEM=0xa
+
+  CFLAGS += -DEFIAARCH64
+  CFLAGS += -ffreestanding
+  CFLAGS += -fno-merge-constants
+  CFLAGS += -fno-stack-check
+endif
+
 GIT_DESCRIBE = $(firstword $(shell git describe --tags) unknown)
 CFLAGS += '-DGIT_DESCRIBE=L"$(GIT_DESCRIBE)"'
 
