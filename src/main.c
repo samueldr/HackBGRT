@@ -394,14 +394,17 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 	goto fail;
 
 	fail: {
-		Print(L"HackBGRT has failed. Use parameter debug=1 for details.\n");
-		Print(L"Get a Windows install disk or a recovery disk to fix your boot.\n");
+		Print(L"\n\nHackBGRT has failed.\n");
+		if (Debug != Print) {
+			Print(L"Use parameter debug=1 for details.\n");
+		}
+		Print(L"\n\n");
 		#ifdef GIT_DESCRIBE
-			Print(L"HackBGRT version: " GIT_DESCRIBE L"\n");
+			Print(L"  HackBGRT version: " GIT_DESCRIBE L"\n");
 		#else
-			Print(L"HackBGRT version: unknown; not an official release?\n");
+			Print(L"  HackBGRT version: unknown; not an official release?\n");
 		#endif
-		Print(L"Press any key to exit.\n");
+		Print(L"\n\nPress any key to exit...\n");
 		ReadKey();
 		return 1;
 	}
