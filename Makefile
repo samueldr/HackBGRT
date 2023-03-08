@@ -26,8 +26,6 @@ CFLAGS += -fno-strict-aliasing
 CFLAGS += -ffreestanding
 CFLAGS += -fshort-wchar
 
-CFLAGS += -maccumulate-outgoing-args
-CFLAGS += -mno-red-zone
 CFLAGS += -Wall
 CFLAGS += -Wshadow
 CFLAGS += -Wunused
@@ -35,17 +33,31 @@ CFLAGS += -Werror-implicit-function-declaration
 
 CFLAGS += -Werror
 
+LDFLAGS =-T $(EFI_LDS)
+LDFLAGS += -nostdlib
+LDFLAGS += -znocombreloc
+LDFLAGS += -shared
+LDFLAGS += -nostdlib
+LDFLAGS += --warn-common
+LDFLAGS += --no-undefined
+LDFLAGS += --fatal-warnings
+LDFLAGS += --build-id=sha1
+LDFLAGS += -Bsymbolic
+
+LDFLAGS += -L $(EFILIB)
+LDFLAGS += -L $(LIB)
+LDFLAGS += $(EFI_CRT_OBJS)
+
+FORMAT = --target=efi-app-$(ARCH)
+
 ifeq ($(ARCH),x86_64)
+  CFLAGS += -maccumulate-outgoing-args
+  CFLAGS += -mno-red-zone
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
 
 GIT_DESCRIBE = $(firstword $(shell git describe --tags) unknown)
 CFLAGS += '-DGIT_DESCRIBE=L"$(GIT_DESCRIBE)"'
-
-LDFLAGS = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
-	-nostdlib --warn-common --no-undefined \
-	--fatal-warnings --build-id=sha1 \
-	-Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
 
 all: $(TARGET)
 
@@ -56,9 +68,9 @@ obj/%.o: src/%.c $(ODIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 HackBGRT.so: $(OBJS)
-	ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
+	$(LD) $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
 
 %.efi: %.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic \
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
-		--target=efi-app-$(ARCH) $^ $@
+		$(FORMAT) $^ $@
