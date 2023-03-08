@@ -58,7 +58,7 @@ static void SetResolution(int w, int h) {
 
 		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = 0;
 		UINTN info_size;
-		if (EFI_ERROR(gop->QueryMode(gop, i, &info_size, &info))) {
+		if (EFI_ERROR(uefi_call_wrapper(gop->QueryMode, 4, gop, i, &info_size, &info))) {
 			continue;
 		}
 		if (info_size < sizeof(*info)) {
@@ -87,7 +87,7 @@ static void SetResolution(int w, int h) {
 	}
 	Debug(L"Found resolution %dx%d.\n", best_w, best_h);
 	if (best_i != gop->Mode->Mode) {
-		gop->SetMode(gop, best_i);
+		uefi_call_wrapper(gop->SetMode, 2, gop, best_i);
 	}
 }
 
@@ -119,7 +119,7 @@ static int SelectCoordinate(int value, int automatic, int native) {
 ACPI_SDT_HEADER* CreateXsdt(ACPI_SDT_HEADER* xsdt0, UINTN entries) {
 	ACPI_SDT_HEADER* xsdt = 0;
 	UINT32 xsdt_len = sizeof(ACPI_SDT_HEADER) + entries * sizeof(UINT64);
-	BS->AllocatePool(EfiACPIReclaimMemory, xsdt_len, (void**)&xsdt);
+	uefi_call_wrapper(BS->AllocatePool, 3, EfiACPIReclaimMemory, xsdt_len, (void**)&xsdt);
 	if (!xsdt) {
 		Print(L"HackBGRT: Failed to allocate memory for XSDT.\n");
 		return 0;
@@ -218,10 +218,10 @@ static ACPI_BGRT* HandleAcpiTables(enum HackBGRT_action action, ACPI_BGRT* bgrt)
 static BMP* LoadBMP(EFI_FILE_HANDLE root_dir, const CHAR16* path) {
 	BMP* bmp = 0;
 	if (!path) {
-		BS->AllocatePool(EfiBootServicesData, 58, (void**) &bmp);
+		uefi_call_wrapper(BS->AllocatePool, 3, EfiBootServicesData, 58, (void**) &bmp);
 		if (!bmp) {
 			Print(L"HackBGRT: Failed to allocate a blank BMP!\n");
-			BS->Stall(1000000);
+			uefi_call_wrapper(BS->Stall, 1, 1000000);
 			return 0;
 		}
 		CopyMem(
@@ -238,7 +238,7 @@ static BMP* LoadBMP(EFI_FILE_HANDLE root_dir, const CHAR16* path) {
 	bmp = LoadFile(root_dir, path, 0);
 	if (!bmp) {
 		Print(L"HackBGRT: Failed to load BMP (%s)!\n", path);
-		BS->Stall(1000000);
+		uefi_call_wrapper(BS->Stall, 1, 1000000);
 		return 0;
 	}
 	return bmp;
@@ -275,7 +275,7 @@ void HackBgrt(EFI_FILE_HANDLE root_dir) {
 			return;
 		}
 		// Replace missing = allocate new.
-		BS->AllocatePool(EfiACPIReclaimMemory, sizeof(*bgrt), (void**)&bgrt);
+		uefi_call_wrapper(BS->AllocatePool, 3, EfiACPIReclaimMemory, sizeof(*bgrt), (void**)&bgrt);
 		if (!bgrt) {
 			Print(L"HackBGRT: Failed to allocate memory for BGRT.\n");
 			return;
@@ -330,7 +330,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 	InitializeLib(image_handle, ST_);
 
 	EFI_LOADED_IMAGE* image;
-	if (EFI_ERROR(BS->HandleProtocol(image_handle, &LoadedImageProtocol, (void**) &image))) {
+	if (EFI_ERROR(uefi_call_wrapper(BS->HandleProtocol, 3, image_handle, &LoadedImageProtocol, (void**) &image))) {
 		Debug(L"HackBGRT: LOADED_IMAGE_PROTOCOL failed.\n");
 		goto fail;
 	}
@@ -361,7 +361,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 	} else {
 		Debug(L"HackBGRT: Loading application %s.\n", config.boot_path);
 		EFI_DEVICE_PATH* boot_dp = FileDevicePath(image->DeviceHandle, (CHAR16*) config.boot_path);
-		if (EFI_ERROR(BS->LoadImage(0, image_handle, boot_dp, 0, 0, &next_image_handle))) {
+		if (EFI_ERROR(uefi_call_wrapper(BS->LoadImage, 6, 0, image_handle, boot_dp, 0, 0, &next_image_handle))) {
 			Print(L"HackBGRT: Failed to load application %s.\n", config.boot_path);
 		}
 	}
@@ -369,7 +369,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 		static CHAR16* default_boot_path = L"\\EFI\\HackBGRT\\bootmgfw-original.efi";
 		Debug(L"HackBGRT: Loading application %s.\n", default_boot_path);
 		EFI_DEVICE_PATH* boot_dp = FileDevicePath(image->DeviceHandle, default_boot_path);
-		if (EFI_ERROR(BS->LoadImage(0, image_handle, boot_dp, 0, 0, &next_image_handle))) {
+		if (EFI_ERROR(uefi_call_wrapper(BS->LoadImage, 6, 0, image_handle, boot_dp, 0, 0, &next_image_handle))) {
 			Print(L"HackBGRT: Also failed to load application %s.\n", default_boot_path);
 			goto fail;
 		}
@@ -386,7 +386,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 			return 0;
 		}
 	}
-	if (EFI_ERROR(BS->StartImage(next_image_handle, 0, 0))) {
+	if (EFI_ERROR(uefi_call_wrapper(BS->StartImage, 3, next_image_handle, 0, 0))) {
 		Print(L"HackBGRT: Failed to start %s.\n", config.boot_path);
 		goto fail;
 	}

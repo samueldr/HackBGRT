@@ -62,21 +62,21 @@ void RandomSeed(UINT64 a, UINT64 b) {
 
 void RandomSeedAuto(void) {
 	EFI_TIME t;
-	RT->GetTime(&t, 0);
+	uefi_call_wrapper(RT->GetTime, 2, &t, 0);
 	UINT64 a, b = ((((((UINT64) t.Second * 100 + t.Minute) * 100 + t.Hour) * 100 + t.Day) * 100 + t.Month) * 10000 + t.Year) * 300000 + t.Nanosecond;
-	BS->GetNextMonotonicCount(&a);
+	uefi_call_wrapper(BS->GetNextMonotonicCount, 1, &a);
 	RandomSeed(a, b), Random(), Random();
 }
 
 void WaitKey(void) {
-	ST->ConIn->Reset(ST->ConIn, FALSE);
+	uefi_call_wrapper(ST->ConIn->Reset, 2, ST->ConIn, FALSE);
 	WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
 }
 
 EFI_INPUT_KEY ReadKey(void) {
 	WaitKey();
 	EFI_INPUT_KEY key = {0};
-	ST->ConIn->ReadKeyStroke(ST->ConIn, &key);
+	uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
 	return key;
 }
 
@@ -84,7 +84,7 @@ void* LoadFileWithPadding(EFI_FILE_HANDLE dir, const CHAR16* path, UINTN* size_p
 	EFI_STATUS e;
 	EFI_FILE_HANDLE handle;
 
-	e = dir->Open(dir, &handle, (CHAR16*) path, EFI_FILE_MODE_READ, 0);
+	e = uefi_call_wrapper(dir->Open, 5, dir, &handle, (CHAR16*) path, EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(e)) {
 		return 0;
 	}
@@ -94,16 +94,17 @@ void* LoadFileWithPadding(EFI_FILE_HANDLE dir, const CHAR16* path, UINTN* size_p
 	FreePool(info);
 
 	void* data = 0;
-	e = BS->AllocatePool(EfiBootServicesData, size + padding, &data);
+	e = uefi_call_wrapper(BS->AllocatePool, 3, EfiBootServicesData, size + padding, &data);
 	if (EFI_ERROR(e)) {
-		handle->Close(handle);
+		uefi_call_wrapper(handle->Close, 1, handle);
 		return 0;
 	}
-	e = handle->Read(handle, &size, data);
+
+	e = uefi_call_wrapper(handle->Read, 3, handle, &size, data);
 	for (int i = 0; i < padding; ++i) {
 		*((char*)data + size + i) = 0;
 	}
-	handle->Close(handle);
+	uefi_call_wrapper(handle->Close, 1, handle);
 	if (EFI_ERROR(e)) {
 		FreePool(data);
 		return 0;

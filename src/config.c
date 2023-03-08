@@ -19,7 +19,7 @@ BOOLEAN ReadConfigFile(struct HackBGRT_config* config, EFI_FILE_HANDLE root_dir,
 		str_len = data_bytes / sizeof(*str);
 	} else {
 		// UTF-8 -> UCS-2
-		EFI_STATUS e = BS->AllocatePool(EfiBootServicesData, data_bytes * 2 + 2, (void**)&str);
+		EFI_STATUS e = uefi_call_wrapper(BS->AllocatePool, 3, EfiBootServicesData, data_bytes * 2 + 2, (void**)&str);
 		if (EFI_ERROR(e)) {
 			FreePool(data);
 			return FALSE;
