@@ -366,7 +366,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *ST_) {
 		}
 	}
 	if (!next_image_handle) {
-		static CHAR16* default_boot_path = L"\\EFI\\HackBGRT\\bootmgfw-original.efi";
+		static CHAR16* default_boot_path = L"\\EFI\\BOOT\\fallback.efi";
 		Debug(L"HackBGRT: Loading application %s.\n", default_boot_path);
 		EFI_DEVICE_PATH* boot_dp = FileDevicePath(image->DeviceHandle, default_boot_path);
 		if (EFI_ERROR(uefi_call_wrapper(BS->LoadImage, 6, 0, image_handle, boot_dp, 0, 0, &next_image_handle))) {
