@@ -307,7 +307,7 @@ void HackBgrt(EFI_FILE_HANDLE root_dir) {
 	int auto_x = 0, auto_y = 0;
 	if (GOP()) {
 		auto_x = max(0, ((int)GOP()->Mode->Info->HorizontalResolution - (int)new_bmp->width) / 2);
-		auto_y = max(0, ((int)GOP()->Mode->Info->VerticalResolution * 2/3 - (int)new_bmp->height) / 2);
+		auto_y = max(0, ((int)GOP()->Mode->Info->VerticalResolution - (int)new_bmp->height) / 2);
 	} else if (old_bmp) {
 		auto_x = max(0, old_x + ((int)old_bmp->width - (int)new_bmp->width) / 2);
 		auto_y = max(0, old_y + ((int)old_bmp->height - (int)new_bmp->height) / 2);
