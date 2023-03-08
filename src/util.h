@@ -65,22 +65,6 @@ static inline UINT64 rotl(const UINT64 x, int k) {
 }
 
 /**
- * Generate a random 64-bit number.
- */
-extern UINT64 Random(void);
-
-
-/**
- * Seed the random number generator. Pass 0 and 0 to seed from the clock.
- */
-extern void RandomSeed(UINT64 a, UINT64 b);
-
-/**
- * Seed the random number generator automatically.
- */
-extern void RandomSeedAuto(void);
-
-/**
  * Wait for a key press. It will still remain in the buffer.
  */
 extern void WaitKey(void);

@@ -41,33 +41,6 @@ const CHAR16* StrStrAfter(const CHAR16* haystack, const CHAR16* needle) {
 	return (haystack = StrStr(haystack, needle)) ? haystack + StrLen(needle) : 0;
 }
 
-UINT64 Random_a, Random_b;
-
-UINT64 Random(void) {
-	// Implemented after xoroshiro128plus.c
-	if (!Random_a && !Random_b) {
-		RandomSeedAuto();
-	}
-	UINT64 a = Random_a, b = Random_b, r = a + b;
-	b ^= a;
-	Random_a = rotl(a, 55) ^ b ^ (b << 14);
-	Random_b = rotl(b, 36);
-	return r;
-}
-
-void RandomSeed(UINT64 a, UINT64 b) {
-	Random_a = a;
-	Random_b = b;
-}
-
-void RandomSeedAuto(void) {
-	EFI_TIME t;
-	uefi_call_wrapper(RT->GetTime, 2, &t, 0);
-	UINT64 a, b = ((((((UINT64) t.Second * 100 + t.Minute) * 100 + t.Hour) * 100 + t.Day) * 100 + t.Month) * 10000 + t.Year) * 300000 + t.Nanosecond;
-	uefi_call_wrapper(BS->GetNextMonotonicCount, 1, &a);
-	RandomSeed(a, b), Random(), Random();
-}
-
 void WaitKey(void) {
 	uefi_call_wrapper(ST->ConIn->Reset, 2, ST->ConIn, FALSE);
 	WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
