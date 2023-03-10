@@ -37,7 +37,6 @@ LDFLAGS =-T $(EFI_LDS)
 LDFLAGS += -nostdlib
 LDFLAGS += -znocombreloc
 LDFLAGS += -shared
-LDFLAGS += -nostdlib
 LDFLAGS += --warn-common
 LDFLAGS += --no-undefined
 LDFLAGS += --fatal-warnings
@@ -63,9 +62,6 @@ ifeq ($(ARCH),aarch64)
   LDFLAGS += -defsym=EFI_SUBSYSTEM=0xa
 
   CFLAGS += -DEFIAARCH64
-  CFLAGS += -ffreestanding
-  CFLAGS += -fno-merge-constants
-  CFLAGS += -fno-stack-check
 endif
 
 GIT_DESCRIBE = $(firstword $(shell git describe --tags) unknown)
@@ -83,6 +79,6 @@ HackBGRT.so: $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi
 
 %.efi: %.so
-	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic \
-		-j .dynsym  -j .rel -j .rela -j .reloc \
-		$(FORMAT) $^ $@
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+		-j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+		-j .reloc $(FORMAT) $< $@
